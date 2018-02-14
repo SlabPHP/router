@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<routes>
+    <route>
+        <path>/test/url</path>
+        <name>Test URL #1</name>
+        <parameters>
+            <testValue>1</testValue>
+            <testString>string</testString>
+        </parameters>
+    </route>
+    <route>
+        <path>/blargh</path>
+        <name>Test URL #2</name>
+        <pattern>/{string:someVar}</pattern>
+    </route>
+    <route>
+        <path>/blargh</path>
+        <name>Test URL #2</name>
+        <pattern>/value/{string:someVar}/thing/{numeric:intVar}</pattern>
+    </route>
+</routes>
