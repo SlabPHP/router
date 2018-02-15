@@ -163,6 +163,12 @@ class Pattern
 
             $validatorClass = new $validatorClassName;
 
+            if (!$validatorClass instanceof \Slab\Router\Validators\ValidatorInterface)
+            {
+                //@todo log this
+                return false;
+            }
+
             $this->validations[] = $validatorClass;
 
             $this->variableMapping[$variableNumber] = $variableName;

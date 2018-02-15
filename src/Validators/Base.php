@@ -8,7 +8,7 @@
  */
 namespace Slab\Router\Validators;
 
-abstract class Base
+abstract class Base implements ValidatorInterface
 {
     /**
      * If you'd like to save stuff to the output
