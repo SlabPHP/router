@@ -3,6 +3,26 @@
     <route>
         <path>/blargh</path>
         <name>Test URL #3</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
         <pattern>/value/{string:someVar}/thing/{numeric:intVar}</pattern>
+        <parameters>
+            <testValue>1</testValue>
+            <testString>string</testString>
+        </parameters>
+    </route>
+    <route>
+        <path>/duplicate-route-by-name</path>
+        <name>Test URL #4</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
+    </route>
+    <route>
+        <path>/override-route</path>
+        <name>Test URL #6b</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
+    </route>
+    <route>
+        <path>/static</path>
+        <name>Test URL #7</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
     </route>
 </routes>

@@ -25,6 +25,8 @@ class Text extends Any
      */
     public function validate($segment)
     {
+        if ($segment == '') return false;
+
         $segment = str_replace(' ', '_', urldecode($segment));
         $result = preg_match($this->pattern, $segment);
 

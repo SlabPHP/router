@@ -3,6 +3,7 @@
     <route>
         <path>/test/url</path>
         <name>Test URL #1</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
         <parameters>
             <testValue>1</testValue>
             <testString>string</testString>
@@ -11,11 +12,23 @@
     <route>
         <path>/blargh</path>
         <name>Test URL #2</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
         <pattern>/{string:someVar}</pattern>
     </route>
     <route>
-        <path>/blargh</path>
-        <name>Test URL #2</name>
-        <pattern>/value/{string:someVar}/thing/{numeric:intVar}</pattern>
+        <path>/duplicate-route</path>
+        <name>Test URL #4</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
+    </route>
+    <route>
+        <path>/optional-route</path>
+        <name>Test URL #5</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
+        <pattern>/[{string:someVar}]</pattern>
+    </route>
+    <route>
+        <path>/override-route</path>
+        <name>Test URL #6a</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
     </route>
 </routes>

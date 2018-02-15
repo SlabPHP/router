@@ -46,16 +46,6 @@ class Configuration
     private $log;
 
     /**
-     * @var string
-     */
-    private $globalAuthenticationClass;
-
-    /**
-     * @var array
-     */
-    private $globalAuthenticationParameters = [];
-
-    /**
      * Set cache
      *
      * @param $useCache
@@ -68,30 +58,6 @@ class Configuration
         $this->cacheInterface = $cacheObject;
         $this->cacheTTL = $tableTTL;
         $this->enableCache = $useCache;
-
-        return $this;
-    }
-
-    /**
-     * @param $className
-     * @param array $parameters
-     * @return $this
-     */
-    public function setGlobalAuthentication($className, $parameters = [])
-    {
-        if ($className[0] != '\\')
-        {
-            $className = '\Slab\Router\Authenticators\\' . $className;
-        }
-
-        if (!class_exists($className))
-        {
-            //@todo Throw something here
-            return $this;
-        }
-
-        $this->globalAuthenticationClass = $className;
-        $this->globalAuthenticationParameters = $parameters;
 
         return $this;
     }
@@ -197,21 +163,5 @@ class Configuration
     public function getConfigurationPaths()
     {
         return $this->configurationPaths;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getGlobalAuthenticationClass()
-    {
-        return $this->globalAuthenticationClass;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getGlobalAuthenticationParameters()
-    {
-        return $this->globalAuthenticationParameters;
     }
 }

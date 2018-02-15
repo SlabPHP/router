@@ -411,49 +411,6 @@ class Router
     }
 
     /**
-     * Handle global override route
-     * @todo reimplement this properly
-     */
-    private function handleGlobalOverrideRoute()
-    {
-        return;
-    }
-
-    /**
-     * Handle global authentication if required
-     */
-    private function handleGlobalAuthentication()
-    {
-        // Don't do global auth on CLI
-        if (php_sapi_name() == "cli") return;
-
-        // Don't do global auth if global auth hasn't been setup, duh
-        if (!$this->configuration->getGlobalAuthenticationClass()) return;
-
-        // Allow a selected route to disable global auth with a disableAuthentication parameter
-        if (!empty($this->selectedRoute) && !empty($this->selectedRoute->parameters->disableAuthentication)) {
-            return;
-        }
-
-        /**
-         * @var \Slab\Router\Authenticators\Base $authenticator
-         */
-        $authenticatorClass = $this->configuration->getGlobalAuthenticationClass();
-
-        if (empty($authenticatorClass)) {
-            if ($this->configuration->getLog())
-            {
-                $this->configuration->getLog()->error("Invalid authenticator class specified: " . $this->configuration->getGlobalAuthenticationClass());
-            }
-            return;
-        }
-
-        $authenticator = new $authenticatorClass();
-
-        $authenticator->challengeAuthentication();
-    }
-
-    /**
      * Determine the actually selected route from URL params
      */
     public function determineSelectedRoute()
@@ -462,7 +419,7 @@ class Router
             $this->segments = array('/');
         }
 
-        $currentLevel = $this->routes;
+        $currentLevel = &$this->routes;
         //$parentSegment = '/';
         $index = 0;
         $isRoot = true;
@@ -474,29 +431,27 @@ class Router
             if (!$segmentIsInteger && !empty($currentLevel[$segment])) {
                 $this->addDebugMessage("Traversing " . $segment);
 
-                $currentLevel = $currentLevel[$segment];
-                //$parentSegment = $segment;
+                $currentLevel = &$currentLevel[$segment];
                 $index = 0;
                 $isRoot = false;
                 continue;
             }
 
-            $lastStand = $currentLevel;
-
             if ($isRoot && !empty($this->routes['/'])) {
-                $lastStand = $this->routes['/'];
+                $currentLevel = &$this->routes['/'];
             }
 
             //We've hit a dead end here. The current tree branch does not have a static segment to match $segment
-            if (!empty($lastStand)) {
-                foreach ($lastStand as $route) {
+            if (!empty($currentLevel))
+            {
+                foreach ($currentLevel as $route) {
                     if ($route instanceof \Slab\Router\Route) {
                         $this->addDebugMessage("Checking route " . $route->getName());
 
                         if ($route->validateDynamicPattern($this->currentRequest, $this->debug)) {
                             $this->addDebugMessage("Dynamic pattern match for route " . $route->getName());
 
-                            $this->selectedRoute = $route;
+                            $this->selectedRoute = &$route;
                             return true;
                         }
                     }
@@ -510,155 +465,39 @@ class Router
             return false;
         }
 
-        if (!empty($currentLevel[$index])) {
-            $this->selectedRoute = $currentLevel[$index];
-            $this->addDebugMessage("Found matching static route: " . $this->selectedRoute->getName());
+        if (!empty($currentLevel))
+        {
+            foreach ($currentLevel as &$route)
+            {
+                if (!($route instanceof \Slab\Router\Route)) continue;
 
-            return true;
+                /**
+                 * @var \Slab\Router\Route $route
+                 */
+                if (!$route->isDynamic())
+                {
+                    $this->selectedRoute = &$route;
+                    $this->addDebugMessage("Found matching static route: " . $this->selectedRoute->getName());
+
+                    return true;
+                }
+                else
+                {
+                    if ($route->validateDynamicPattern($this->currentRequest, $this->debug))
+                    {
+                        $this->selectedRoute = &$route;
+                        $this->addDebugMessage("Found matching dynamic route: " . $this->selectedRoute->getName());
+
+                        return true;
+                    }
+                }
+            }
+
         }
 
-        $this->addDebugMessage("Unable to find a matching static route.");
+        $this->addDebugMessage("Unable to find a matching route.");
 
         return false;
-    }
-
-    /**
-     * Begin the routing of the selected route
-     *
-     * @return boolean
-     */
-    public function routeRequest()
-    {
-        $this->handleGlobalOverrideRoute();
-
-        $this->handleGlobalAuthentication();
-
-        if (empty($this->selectedRoute)) {
-            if ($this->isHomepage) {
-                $this->handleWelcomeToFramework();
-                return false;
-            }
-
-            $this->handle404();
-            return false;
-        }
-
-        if (!$this->routeIndividualPage($this->selectedRoute)) {
-            $this->handle404();
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Welcome to the framework!
-     * @todo Move this out of the router
-     */
-    public function handleWelcomeToFramework()
-    {
-        $className = '\Slab\Controllers\Template';
-
-        $route = new Route(array(
-            'path' => $this->currentRequest,
-            'class' => $className,
-            'name' => 'Welcome to SlabPHP',
-            'parameters' => array(
-                'pageTitle' => 'Welcome to SlabPHP!',
-                'subTemplateName' => 'pages/debug/welcome.php',
-                'pageDescription' => 'Your SlabPHP application has been successfully setup!'
-            )
-        ));
-
-        $this->routeIndividualPage($route);
-
-        exit();
-    }
-
-
-    /**
-     * Handle 404 pages
-     * @todo move this out of the router
-     */
-    public function handle404()
-    {
-        //Proxy Attempt Check
-        $proxyCheck = substr($this->currentRequest, 0, 7);
-        if ($proxyCheck == 'http://' || $proxyCheck == 'https:/') {
-            header($_SERVER["SERVER_PROTOCOL"] . " 403 Forbidden");
-
-            if ($this->configuration->getLog())
-            {
-                $this->configuration->getLog()->notice("Proxy attempt for " . $this->currentRequest . " denied.");
-            }
-
-            echo 'There is no proxy here.';
-            exit();
-        }
-
-        $className = '\Slab\Controllers\Error'; //$this->findClass('Controllers\Error', false);
-
-        $route = new Route(array(
-            'path' => $this->currentRequest,
-            'class' => $className,
-            'name' => 'Dynamic Error',
-            'parameters' => array(
-                'errorCode' => 404
-            )
-        ));
-
-        $this->routeIndividualPage($route);
-
-        exit();
-    }
-
-    /**
-     * Route an individual page
-     *
-     * @param Route $route
-     * @return boolean
-     */
-    public function routeIndividualPage(Route $route)
-    {
-        $this->selectedRoute = $route;
-
-        $className = $route->getClass();
-
-        if (empty($className)) return false;
-
-        if (!class_exists($className))
-        {
-            if ($this->configuration->getLog())
-            {
-                $this->configuration->getLog()->error("Invalid controller class specified: " . $className);
-            }
-
-            return false;
-        }
-
-        $controller = new $className();
-
-        if (!($controller instanceof \Slab\Components\Router\RoutableControllerInterface))
-        {
-            if ($this->configuration->getLog())
-            {
-                $this->configuration->getLog()->error("Controller does not adopt RoutableControllerInterface: " . $className);
-                return false;
-            }
-        }
-
-        //Copy over validated data
-        if ($route->getValidatedData())
-        {
-            foreach ($route->getValidatedData() as $parameterName => $value)
-            {
-                $route->parameters->$parameterName = $value;
-            }
-        }
-
-        $controller->executeControllerLifecycle();
-
-        return true;
     }
 
     /**

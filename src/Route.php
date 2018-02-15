@@ -153,8 +153,8 @@ class Route
     private function initializeFromSimpleXML($xmlObject)
     {
         $this->path = !empty($xmlObject->path) ? trim($xmlObject->path) : '/';
-        $this->name = !empty($xmlObject->routeName) ? trim($xmlObject->routeName) : '';
-        $this->class = !empty($xmlObject->className) ? trim($xmlObject->className) : '';
+        $this->name = !empty($xmlObject->name) ? trim($xmlObject->name) : '';
+        $this->class = !empty($xmlObject->class) ? trim($xmlObject->class) : '';
 
         $this->priority = !empty($xmlObject->priority) ? intval($xmlObject->priority) : 0;
 
@@ -321,6 +321,14 @@ class Route
     }
 
     /**
+     * @return \stdClass
+     */
+    public function getParameters()
+    {
+        return $this->parameters;
+    }
+
+    /**
      * Return the pattern string of a route
      */
     public function getPatternString()
@@ -390,4 +398,13 @@ class Route
     {
         return $this->children;
     }
+
+    /**
+     * @return bool
+     */
+    public function isDynamic()
+    {
+        return !empty($this->pattern);
+    }
+
 }
