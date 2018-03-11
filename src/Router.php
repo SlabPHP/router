@@ -12,7 +12,7 @@
  */
 namespace Slab\Router;
 
-class Router
+class Router implements \Slab\Components\Router\RouterInterface
 {
     /**
      * URI Segments
@@ -84,7 +84,7 @@ class Router
     /**
      * Route Name Mapping
      *
-     * @var string[Route]
+     * @var Route[]
      */
     private $routeNameMap = [];
 
@@ -97,22 +97,164 @@ class Router
     private $isHomepage = false;
 
     /**
-     * @var Configuration
+     * @var int
      */
-    private $configuration;
+    private $cacheTTL = 3600;
+
+    /**
+     * @var bool
+     */
+    private $enableCache = false;
+
+    /**
+     * @var array
+     */
+    private $routeFiles = [];
+
+    /**
+     * @var array
+     */
+    private $configurationPaths = [];
+
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    private $log;
+
+    /**
+     * @var \Slab\Components\Cache\DriverInterface
+     */
+    private $cacheInterface = null;
 
     /**
      * Constructor builds out the internal arrays before processing the route table
-
-     * @param Configuration $configuration
      */
-    public function __construct(Configuration $configuration)
+    public function __construct()
     {
-        $this->configuration = $configuration;
-
         $this->getPathInfo();
+    }
 
-        $this->getRoutingTable();
+    /**
+     * Route the request
+     *
+     * @param \Slab\Components\SystemInterface $system
+     * @return bool
+     */
+    public function routeRequest(\Slab\Components\SystemInterface $system)
+    {
+        $this->determineSelectedRoute();
+
+        if (!empty($this->selectedRoute))
+        {
+            if ($this->routeIndividualRoute($this->selectedRoute, $system))
+            {
+                return true;
+            }
+        }
+
+        if (!empty($this->routeNameMap['404'])) {
+            $this->routeIndividualRoute($this->routeNameMap['404'], $system);
+        } else {
+            header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+            echo 'A 404 error occured.';
+        }
+
+        return false;
+    }
+
+    /**
+     * @param Route $route
+     * @param \Slab\Components\SystemInterface $system
+     * @return $this|bool
+     */
+    private function routeIndividualRoute(Route $route, \Slab\Components\SystemInterface $system)
+    {
+        $className = $route->getClass();
+
+        if (empty($className) || !class_exists($className)) {
+            if (!empty($this->log)) {
+                $this->log->error('The routed class does not exist ' . $className . ', returning a 404 instead.');
+            }
+            return false;
+        }
+
+        /**
+         * @var \Slab\Components\Router\RoutableControllerInterface $class
+         */
+        $class = new $className();
+
+        $class->setSystemReference($system);
+
+        $class->executeControllerLifecycle();
+
+        return $this;
+    }
+
+    /**
+     * Set cache
+     *
+     * @param $useCache
+     * @param $tableTTL
+     * @param \Slab\Components\Cache\DriverInterface $cacheObject
+     * @return $this
+     */
+    public function setCache($useCache, $tableTTL, \Slab\Components\Cache\DriverInterface $cacheObject)
+    {
+        $this->cacheInterface = $cacheObject;
+        $this->cacheTTL = $tableTTL;
+        $this->enableCache = $useCache;
+
+        return $this;
+    }
+
+    /**
+     * Set debug mode
+     *
+     * @param $flag
+     * @return $this
+     */
+    public function setDebugMode($flag)
+    {
+        $this->debugMode = $flag;
+
+        return $this;
+    }
+
+    /**
+     * @param \Psr\Log\LoggerInterface $log
+     * @return $this
+     */
+    public function setLog(\Psr\Log\LoggerInterface $log)
+    {
+        $this->log = $log;
+
+        return $this;
+    }
+
+    /**
+     * Set configuration paths
+     *
+     * @param $paths
+     * @return $this
+     */
+    public function setConfigurationPaths($paths)
+    {
+        $this->configurationPaths = $paths;
+
+        return $this;
+    }
+
+    /**
+     * Add route file
+     *
+     * @param $routeFile
+     * @return $this
+     */
+    public function addRouteFile($routeFile)
+    {
+        $this->routeFiles[] = $routeFile;
+
+        return $this;
     }
 
     /**
@@ -201,7 +343,7 @@ class Router
      */
     public function getRoutingTable()
     {
-        if ($this->configuration->getCacheDriver())
+        if ($this->enableCache && !empty($this->cacheInterface))
         {
             return $this->fetchRoutingTableFromCache();
         }
@@ -232,7 +374,7 @@ class Router
      */
     private function fetchRoutingTableFromCache()
     {
-        $this->routes = $this->configuration->getCacheDriver()->get('Routing_Table');
+        $this->routes = $this->cacheInterface->get('Routing_Table');
 
         if (empty($this->routes))
         {
@@ -291,22 +433,18 @@ class Router
      */
     public function loadRoutingTable()
     {
-        $routeFiles = $this->configuration->getRouteFiles();
-
-        if (empty($routeFiles) || !is_array($routeFiles)) {
-            if ($this->configuration->getLog())
+        if (empty($this->routeFiles) || !is_array($this->routeFiles)) {
+            if (!empty($this->log))
             {
-                $this->configuration->getLog()->error("Missing configuration option routeFiles, or route file list in improper format.");
+                $this->log->error("Missing configuration option routeFiles, or route file list in improper format.");
             }
 
             return false;
         }
 
-        $configDirs = $this->configuration->getConfigurationPaths();
-
         $routeTable = array();
-        foreach ($routeFiles as $route) {
-            foreach ($configDirs as $dir) {
+        foreach ($this->routeFiles as $route) {
+            foreach ($this->configurationPaths as $dir) {
                 $fileName = $dir . '/' . $route;
                 if (file_exists($fileName)) {
                     $this->loadRouteFile($routeTable, $fileName);
@@ -339,20 +477,19 @@ class Router
                 $errorMessage .= "\n" . $error->message;
             }
 
-            if ($this->configuration->getLog())
+            if (!empty($this->log))
             {
-                $this->configuration->getLog()->error($errorMessage);
+                $this->log->error($errorMessage);
             }
             return;
         }
 
-        //@todo findClass
         $routeClass = 'Slab\Router\Route';
 
         if (empty($routeClass)) {
-            if ($this->configuration->getLog())
+            if (!empty($this->log))
             {
-                $this->configuration->getLog()->error("Failed to find suitable Route object.");
+                $this->log->error("Failed to find suitable Route object.");
             }
             return;
         }
@@ -415,6 +552,11 @@ class Router
      */
     public function determineSelectedRoute()
     {
+        if (empty($this->routes))
+        {
+            $this->getRoutingTable();
+        }
+
         if (empty($this->segments)) {
             $this->segments = array('/');
         }
@@ -448,7 +590,8 @@ class Router
                     if ($route instanceof \Slab\Router\Route) {
                         $this->addDebugMessage("Checking route " . $route->getName());
 
-                        if ($route->validateDynamicPattern($this->currentRequest, $this->debug)) {
+                        $validationDebug = [];
+                        if ($route->validateDynamicPattern($this->currentRequest, $validationDebug)) {
                             $this->addDebugMessage("Dynamic pattern match for route " . $route->getName());
 
                             $this->selectedRoute = &$route;
@@ -483,7 +626,8 @@ class Router
                 }
                 else
                 {
-                    if ($route->validateDynamicPattern($this->currentRequest, $this->debug))
+                    $validationDebug = [];
+                    if ($route->validateDynamicPattern($this->currentRequest, $validationDebug))
                     {
                         $this->selectedRoute = &$route;
                         $this->addDebugMessage("Found matching dynamic route: " . $this->selectedRoute->getName());
@@ -514,7 +658,7 @@ class Router
      * Gets a route by name
      *
      * @param string $routeName
-     * @return \Slab\Router\Route
+     * @return null|\Slab\Router\Route
      */
     public function getRouteByName($routeName)
     {
@@ -522,7 +666,7 @@ class Router
             return $this->routeNameMap[$routeName];
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -540,7 +684,7 @@ class Router
      *
      * @param string $message
      */
-    protected function addDebugMessage($message)
+    private function addDebugMessage($message)
     {
         if ($this->debugMode) {
             $this->debug[] = $message;

@@ -11,34 +11,21 @@ namespace Slab\Tests\Router;
 class RouterTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @return \Slab\Router\Configuration
+     * Test router creation
      */
-    private function getDefaultConfiguration()
+    public function testRouterCreation()
     {
-        $configuration = new \Slab\Router\Configuration();
-        $logger = new Mocks\Log();
+        $_SERVER['REQUEST_URI'] = '/test/url';
+        $_SERVER['SERVER_NAME'] = 'localhost';
 
-        $configuration
+        $router = new \Slab\Router\Router();
+        $logger = new Mocks\Log();
+        $router
             ->setLog($logger)
             ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
             ->addRouteFile('default.xml')
             ->addRouteFile('extra.xml')
             ->setDebugMode(true);
-
-        return $configuration;
-    }
-
-    /**
-     * Test router creation
-     */
-    public function testRouterCreation()
-    {
-        $configuration = $this->getDefaultConfiguration();
-
-        $_SERVER['REQUEST_URI'] = '/test/url';
-        $_SERVER['SERVER_NAME'] = 'localhost';
-
-        $router = new \Slab\Router\Router($configuration);
 
         $this->assertEquals('http://localhost', $router->baseHREF);
         $this->assertEquals('http://localhost/test/url', $router->currentHREF);
@@ -58,12 +45,17 @@ class RouterTest extends \PHPUnit\Framework\TestCase
      */
     public function testRouting($url, $shouldResolve, $resolvesTo)
     {
-        $configuration = $this->getDefaultConfiguration();
-
         $_SERVER['REQUEST_URI'] = $url;
         $_SERVER['SERVER_NAME'] = 'localhost';
 
-        $router = new \Slab\Router\Router($configuration);
+        $router = new \Slab\Router\Router();
+        $logger = new Mocks\Log();
+        $router
+            ->setLog($logger)
+            ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
+            ->addRouteFile('default.xml')
+            ->addRouteFile('extra.xml')
+            ->setDebugMode(true);
 
         $router->determineSelectedRoute();
 
@@ -112,12 +104,18 @@ class RouterTest extends \PHPUnit\Framework\TestCase
      */
     public function testRouteParameters()
     {
-        $configuration = $this->getDefaultConfiguration();
-
         $_SERVER['REQUEST_URI'] = '/blargh/value/thang/thing/77';
         $_SERVER['SERVER_NAME'] = 'localhost';
 
-        $router = new \Slab\Router\Router($configuration);
+        $router = new \Slab\Router\Router();
+        $logger = new Mocks\Log();
+        $router
+            ->setLog($logger)
+            ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
+            ->addRouteFile('default.xml')
+            ->addRouteFile('extra.xml')
+            ->setDebugMode(true);
+
         $router->determineSelectedRoute();
         $route = $router->getSelectedRoute();
 
@@ -127,5 +125,28 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(77, $params->intVar);
         $this->assertEquals('1', $params->testValue);
         $this->assertEquals('string', $params->testString);
+    }
+
+    /**
+     * Test executed controller
+     */
+    public function testExecuteRoutedController()
+    {
+        $_SERVER['REQUEST_URI'] = '/test/url';
+        $_SERVER['SERVER_NAME'] = 'localhost';
+
+        $router = new \Slab\Router\Router();
+        $logger = new Mocks\Log();
+        $router
+            ->setLog($logger)
+            ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
+            ->addRouteFile('default.xml')
+            ->addRouteFile('extra.xml')
+            ->setDebugMode(true);
+
+        $systemMock = new Mocks\System();
+
+        $this->expectOutputString('System set!Executed!');
+        $this->assertTrue($router->routeRequest($systemMock));
     }
 }

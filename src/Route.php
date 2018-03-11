@@ -273,21 +273,7 @@ class Route
             return false;
         }
 
-        if (class_exists($this->class)) {
-            return $this->class;
-        } else {
-            $class = $this->findClass($this->class, false);
-
-            if (empty($class)) {
-                $this->getSystem()->log->error("Class " . $this->class . " specified in route " . $this->name . " could not be found.");
-                $this->validRoute = false;
-                return false;
-            }
-
-            $this->class = $class;
-
-            return $class;
-        }
+        return $this->class;
     }
 
     /**
