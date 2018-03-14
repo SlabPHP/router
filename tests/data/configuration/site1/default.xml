@@ -31,4 +31,10 @@
         <name>Test URL #6a</name>
         <class>\Slab\Tests\Router\Mocks\Controller</class>
     </route>
+    <route>
+        <path>/validator</path>
+        <pattern>/{\Slab\Tests\Router\Mocks\Validator:testValue}</pattern>
+        <name>Test URL #8</name>
+        <class>\Slab\Tests\Router\Mocks\Controller</class>
+    </route>
 </routes>

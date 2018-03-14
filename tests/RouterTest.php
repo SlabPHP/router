@@ -119,12 +119,50 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $router->determineSelectedRoute();
         $route = $router->getSelectedRoute();
 
+        $this->assertNotEmpty($route);
+
         $params = $route->getParameters();
 
         $this->assertEquals('thang', $params->someVar);
         $this->assertEquals(77, $params->intVar);
         $this->assertEquals('1', $params->testValue);
         $this->assertEquals('string', $params->testString);
+    }
+
+    /**
+     * Test validated data
+     */
+    public function testRouteValidatedData()
+    {
+        $_SERVER['REQUEST_URI'] = '/validator/throng';
+        $_SERVER['SERVER_NAME'] = 'localhost';
+
+        $router = new \Slab\Router\Router();
+        $logger = new Mocks\Log();
+        $router
+            ->setLog($logger)
+            ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
+            ->addRouteFile('default.xml')
+            ->addRouteFile('extra.xml')
+            ->setDebugMode(true);
+
+        $router->determineSelectedRoute();
+        $route = $router->getSelectedRoute();
+
+        $this->assertNotEmpty($route);
+
+        $params = $route->getParameters();
+
+        $this->assertNotEmpty($params);
+        $this->assertNotEmpty($params->testValue);
+        $this->assertEquals('throng', $params->testValue);
+
+        $validated = $route->getValidatedData();
+
+        $this->assertNotEmpty($validated);
+        $this->assertNotEmpty($validated->reversed);
+
+        $this->assertEquals('gnorht', $validated->reversed);
     }
 
     /**

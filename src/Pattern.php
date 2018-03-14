@@ -54,6 +54,7 @@ class Pattern
      * Pattern constructor
      * @param string $path
      * @param string $routePattern
+     * @throws \Exception
      */
     public function __construct($path, $routePattern)
     {
@@ -92,6 +93,7 @@ class Pattern
      * @param string $path
      * @param string $routePattern
      * @return boolean
+     * @throws \Exception
      */
     private function constructInternalRegularExpression($path, $routePattern)
     {
@@ -139,25 +141,30 @@ class Pattern
 
             if (!$isOptionalPattern && $hasOptional)
             {
-                //@todo log this "Route " . $path . " has required fields after optional fields.", "Router";
-                return false;
+                throw new \Exception("Route " . $path . " has required fields after optional fields.");
             }
 
             list($validatorClass, $variableName) = explode(':', $pattern);
 
-            $validatorClass = ucfirst($validatorClass);
-
-            if (strcasecmp($validatorClass, 'String') == 0)
+            if ($validatorClass[0] != '\\')
             {
-                $validatorClass = 'Text';
+                $validatorClass = ucfirst($validatorClass);
+
+                if (strcasecmp($validatorClass, 'String') == 0)
+                {
+                    $validatorClass = 'Text';
+                }
+
+                $validatorClassName = '\Slab\Router\Validators\\' . $validatorClass;
+            }
+            else
+            {
+                $validatorClassName = $validatorClass;
             }
 
-            $validatorClassName = '\Slab\Router\Validators\\' . $validatorClass; //@todo findClass
             if (!class_exists($validatorClassName))
             {
-                //"Route " . $path . " specified invalid validator class " . $validatorClass, "Router"
-                //@todo log this
-                return false;
+                throw new \Exception("Route " . $path . " specified invalid validator class " . $validatorClass);
             }
 
 
@@ -165,8 +172,7 @@ class Pattern
 
             if (!$validatorClass instanceof \Slab\Router\Validators\ValidatorInterface)
             {
-                //@todo log this
-                return false;
+                throw new \Exception("Validator " . $validatorClass . " does not explicitly implement interface \Slab\Router\Validators\ValidatorInterface");
             }
 
             $this->validations[] = $validatorClass;
@@ -239,7 +245,7 @@ class Pattern
 
         if (is_array($debugInformation)) $debugInformation[] = "Fully validated!";
 
-        $this->validatedPassedData = $validatedPassedData;
+        $this->validatedPassedData = (object)$validatedPassedData;
 
         return true;
     }

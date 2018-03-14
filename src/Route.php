@@ -8,7 +8,7 @@
  */
 namespace Slab\Router;
 
-class Route
+class Route implements \Slab\Components\Router\RouteInterface
 {
     /**
      * Route path
@@ -85,6 +85,7 @@ class Route
      *
      * @param mixed $initializingObject
      * @param \Psr\Log\LoggerInterface $logReference
+     * @throws \Exception
      */
     public function __construct($initializingObject = null, $logReference = null)
     {
@@ -100,6 +101,7 @@ class Route
     /**
      * Allow programmatic initialization of a route
      * @param \stdClass $object
+     * @throws \Exception
      */
     private function initializeFromHardcodedObject($object)
     {
@@ -149,6 +151,7 @@ class Route
      * Initialize from a simple XML object
      *
      * @param \SimpleXMLElement $xmlObject
+     * @throws \Exception
      */
     private function initializeFromSimpleXML($xmlObject)
     {
@@ -355,6 +358,7 @@ class Route
     /**
      * Get path
      *
+     * @param array|null $parameters
      * @return string
      */
     public function getPath($parameters = null)

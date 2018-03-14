@@ -11,6 +11,15 @@ namespace Slab\Tests\Router\Mocks;
 class Controller implements \Slab\Components\Router\RoutableControllerInterface
 {
     /**
+     * @param \Slab\Components\Router\RouteInterface $route
+     * @return mixed
+     */
+    public function setRouteReference(\Slab\Components\Router\RouteInterface $route)
+    {
+        return $this;
+    }
+
+    /**
      * @param \Slab\Components\SystemInterface $system
      * @return mixed
      */

@@ -184,6 +184,7 @@ class Router implements \Slab\Components\Router\RouterInterface
         $class = new $className();
 
         $class->setSystemReference($system);
+        $class->setRouteReference($route);
 
         $class->executeControllerLifecycle();
 
@@ -498,7 +499,19 @@ class Router implements \Slab\Components\Router\RouterInterface
             /**
              * @var \Slab\Router\Route $route
              */
-            $route = new $routeClass($routeObject);
+            try
+            {
+                $route = new $routeClass($routeObject);
+            }
+            catch (\Exception $exception)
+            {
+                if (!empty($this->log))
+                {
+                    $this->log->error("Failed to add route to table: " . $exception->getMessage());
+                }
+                continue;
+            }
+
 
             if (!$route->isValid()) {
                 $this->addDebugMessage('Skipping invalid route!');
