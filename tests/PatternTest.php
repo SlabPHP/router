@@ -12,6 +12,7 @@ class PatternTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * Test standard pattern
+     * @throws \Exception
      */
     public function testDynamicPattern()
     {
@@ -38,6 +39,7 @@ class PatternTest extends \PHPUnit\Framework\TestCase
 
     /**
      * Tests having value pattern items
+     * @throws \Exception
      */
     public function testValuePattern()
     {
@@ -63,6 +65,7 @@ class PatternTest extends \PHPUnit\Framework\TestCase
 
     /**
      * Test regular pattern
+     * @throws \Exception
      */
     public function testInvalidPattern()
     {

@@ -12,6 +12,7 @@ class RouteTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * Test simple route creation
+     * @throws \Exception
      */
     public function testSimpleRoute()
     {
@@ -38,6 +39,7 @@ class RouteTest extends \PHPUnit\Framework\TestCase
 
     /**
      * Test invalid route generation
+     * @throws \Exception
      */
     public function testInvalidRoute()
     {
@@ -66,6 +68,7 @@ class RouteTest extends \PHPUnit\Framework\TestCase
 
     /**
      * Test dynamic route
+     * @throws \Exception
      */
     public function testDynamicRoute()
     {

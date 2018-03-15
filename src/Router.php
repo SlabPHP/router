@@ -152,10 +152,18 @@ class Router implements \Slab\Components\Router\RouterInterface
             }
         }
 
-        if (!empty($this->routeNameMap['404'])) {
+        if (!empty($this->routeNameMap['404']))
+        {
             $this->routeIndividualRoute($this->routeNameMap['404'], $system);
-        } else {
-            header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+        }
+        else
+        {
+            if (!headers_sent())
+            {
+                $protocol = !empty($_SERVER["SERVER_PROTOCOL"]) ? $_SERVER["SERVER_PROTOCOL"] : 'HTTP/1.0';
+                header($protocol . " 404 Not Found");
+            }
+
             echo 'A 404 error occured.';
         }
 

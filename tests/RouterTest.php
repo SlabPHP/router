@@ -19,7 +19,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $_SERVER['SERVER_NAME'] = 'localhost';
 
         $router = new \Slab\Router\Router();
-        $logger = new Mocks\Log();
+        $logger = new \Slab\Tests\Components\Mocks\Log();
         $router
             ->setLog($logger)
             ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
@@ -49,7 +49,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $_SERVER['SERVER_NAME'] = 'localhost';
 
         $router = new \Slab\Router\Router();
-        $logger = new Mocks\Log();
+        $logger = new \Slab\Tests\Components\Mocks\Log();
         $router
             ->setLog($logger)
             ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
@@ -108,7 +108,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $_SERVER['SERVER_NAME'] = 'localhost';
 
         $router = new \Slab\Router\Router();
-        $logger = new Mocks\Log();
+        $logger = new \Slab\Tests\Components\Mocks\Log();
         $router
             ->setLog($logger)
             ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
@@ -138,7 +138,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $_SERVER['SERVER_NAME'] = 'localhost';
 
         $router = new \Slab\Router\Router();
-        $logger = new Mocks\Log();
+        $logger = new \Slab\Tests\Components\Mocks\Log();
         $router
             ->setLog($logger)
             ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
@@ -174,7 +174,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $_SERVER['SERVER_NAME'] = 'localhost';
 
         $router = new \Slab\Router\Router();
-        $logger = new Mocks\Log();
+        $logger = new \Slab\Tests\Components\Mocks\Log();
         $router
             ->setLog($logger)
             ->setConfigurationPaths([__DIR__.'/data/configuration/site1', __DIR__.'/data/configuration/site2'])
@@ -182,7 +182,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
             ->addRouteFile('extra.xml')
             ->setDebugMode(true);
 
-        $systemMock = new Mocks\System();
+        $systemMock = new\Slab\Tests\Components\Mocks\System();
 
         $this->expectOutputString('System set!Executed!');
         $this->assertTrue($router->routeRequest($systemMock));
