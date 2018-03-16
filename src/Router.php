@@ -138,7 +138,7 @@ class Router implements \Slab\Components\Router\RouterInterface
      * Route the request
      *
      * @param \Slab\Components\SystemInterface $system
-     * @return bool
+     * @return \Slab\Components\Router\RouteInterface
      */
     public function routeRequest(\Slab\Components\SystemInterface $system)
     {
@@ -146,57 +146,15 @@ class Router implements \Slab\Components\Router\RouterInterface
 
         if (!empty($this->selectedRoute))
         {
-            if ($this->routeIndividualRoute($this->selectedRoute, $system))
-            {
-                return true;
-            }
+            return $this->selectedRoute;
         }
 
         if (!empty($this->routeNameMap['404']))
         {
-            $this->routeIndividualRoute($this->routeNameMap['404'], $system);
-        }
-        else
-        {
-            if (!headers_sent())
-            {
-                $protocol = !empty($_SERVER["SERVER_PROTOCOL"]) ? $_SERVER["SERVER_PROTOCOL"] : 'HTTP/1.0';
-                header($protocol . " 404 Not Found");
-            }
-
-            echo 'A 404 error occured.';
+            return $this->routeNameMap['404'];
         }
 
-        return false;
-    }
-
-    /**
-     * @param Route $route
-     * @param \Slab\Components\SystemInterface $system
-     * @return $this|bool
-     */
-    private function routeIndividualRoute(Route $route, \Slab\Components\SystemInterface $system)
-    {
-        $className = $route->getClass();
-
-        if (empty($className) || !class_exists($className)) {
-            if (!empty($this->log)) {
-                $this->log->error('The routed class does not exist ' . $className . ', returning a 404 instead.');
-            }
-            return false;
-        }
-
-        /**
-         * @var \Slab\Components\Router\RoutableControllerInterface $class
-         */
-        $class = new $className();
-
-        $class->setSystemReference($system);
-        $class->setRouteReference($route);
-
-        $class->executeControllerLifecycle();
-
-        return $this;
+        return null;
     }
 
     /**
