@@ -184,7 +184,8 @@ class RouterTest extends \PHPUnit\Framework\TestCase
 
         $systemMock = new\Slab\Tests\Components\Mocks\System();
 
-        $this->expectOutputString('System set!Executed!');
-        $this->assertTrue($router->routeRequest($systemMock));
+        $route = $router->routeRequest($systemMock);
+        $this->assertNotEmpty($route);
+        $this->assertInstanceOf('\Slab\Router\Route', $route);
     }
 }
