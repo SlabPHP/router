@@ -41,7 +41,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
      * @param $url
      * @param $shouldResolve
      * @param $resolvesTo
-     * @dataProvider testRoutingDataProvider
+     * @dataProvider dataProviderRouting
      */
     public function testRouting($url, $shouldResolve, $resolvesTo)
     {
@@ -76,7 +76,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase
      *
      * @return array
      */
-    public function testRoutingDataProvider()
+    public function dataProviderRouting()
     {
         return [
             ['/test/url', true, 'Test URL #1'],
@@ -166,9 +166,9 @@ class RouterTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Test executed controller
+     * Another test
      */
-    public function testExecuteRoutedController()
+    public function testRouteAController()
     {
         $_SERVER['REQUEST_URI'] = '/test/url';
         $_SERVER['SERVER_NAME'] = 'localhost';
@@ -184,7 +184,8 @@ class RouterTest extends \PHPUnit\Framework\TestCase
 
         $systemMock = new\Slab\Tests\Components\Mocks\System();
 
-        $this->expectOutputString('System set!Executed!');
-        $this->assertTrue($router->routeRequest($systemMock));
+        $result = $router->routeRequest($systemMock);
+        $this->assertNotEmpty($result);
+        $this->assertSame('\Slab\Tests\Components\Mocks\Router\Controller', $result->getClass());
     }
 }
